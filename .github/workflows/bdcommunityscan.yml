@@ -20,7 +20,7 @@ jobs:
     # Runs special workflow steps for pull requests
     - name: Black Duck security scan for Pull Request
       if: ${{github.event_name == 'pull_request'}}
-      uses: matthewb66/blackduck-scan-directguidance@v3
+      uses: matthewb66/blackduck-scan-directguidance@v4
       with:
         url: ${{ secrets.BLACKDUCK_URL }}
         token: ${{ secrets.BLACKDUCK_API_TOKEN }}
@@ -37,7 +37,7 @@ jobs:
     # Runs special workflow steps for push
     - name: Black Duck security scan for Push
       if: ${{github.event_name == 'push'}}
-      uses: matthewb66/blackduck-scan-directguidance@v3
+      uses: matthewb66/blackduck-scan-directguidance@v4
       with:
         url: ${{ secrets.BLACKDUCK_URL }}
         token: ${{ secrets.BLACKDUCK_API_TOKEN }}
