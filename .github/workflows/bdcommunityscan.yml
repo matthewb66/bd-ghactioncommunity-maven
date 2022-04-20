@@ -1,65 +1,46 @@
-# This workflow will do a clean install of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+  name: Scan a project with Black Duck
+  
+  on:
+    push:
+      branches: [ main ]
+    pull_request:
+      branches: [ main ]
+    workflow_dispatch:
+  
+  jobs:
+    blackduck:
+      runs-on: ubuntu-latest
+      steps:
+      
+      - name: Checkout the code
+        uses: actions/checkout@v2
+        
+      # Install Python 3.9 for Black Duck Action
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+   
+      # Install Dependencies for Black Duck Action
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -i https://test.pypi.org/simple/ blackduck_direct_scan_action
+ 
+      # Run manual full/intelligent scan
+      - name: Run Black Duck Full Scan
+        if: ${{github.event_name == 'workflow_dispatch'}}
+        run: |
+          blackduck-direct-scan-action --bd_url ${{ secrets.BLACKDUCK_URL }} --bd_token ${{ secrets.BLACKDUCK_API_TOKEN }} --mode intelligent
+        env:
+          # Pass the GitHub token to the script in order to create PRs
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}        
 
-name: BD GH Community Action
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-          
-    # Runs special workflow steps for pull requests
-    - name: Black Duck security scan for Pull Request
-      if: ${{github.event_name == 'pull_request'}}
-      uses: synopsys-sig-community/blackduck-direct-scan-action@v1
-      with:
-        bd_url: ${{ secrets.BLACKDUCK_URL }}
-        bd_token: ${{ secrets.BLACKDUCK_API_TOKEN }}
-        fix_pr: false
-        comment_on_pr: true
-        upgrade_major: true
-#         detect_opts: detect.detector.buildless=true,detect.maven.buildless.legacy.mode=false
-        output: blackduck-output
-        debug: 9
-        sarif: blackduck-sarif.json
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-
-    # Runs special workflow steps for push
-    - name: Black Duck security scan for Push
-      if: ${{github.event_name == 'push'}}
-      uses: synopsys-sig-community/blackduck-direct-scan-action@v1
-      with:
-        bd_url: ${{ secrets.BLACKDUCK_URL }}
-        bd_token: ${{ secrets.BLACKDUCK_API_TOKEN }}
-        fix_pr: true
-        comment_on_pr: false
-        upgrade_major: true
-#         detect_opts: detect.detector.buildless=true,detect.maven.buildless.legacy.mode=false
-        output: blackduck-output
-        debug: 9
-        sarif: blackduck-sarif.json  
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-
-    - name: "Check file existence"
-      id: check_files
-      uses: andstor/file-existence-action@v1
-      with:
-        files: "blackduck-sarif.json"
-    - name: Upload SARIF file
-      if: steps.check_files.outputs.files_exists == 'true'
- #     if: ${{github.event_name == 'pull_request'}}
-      uses: github/codeql-action/upload-sarif@v1
-      with:
-        # Path to SARIF file relative to the root of the repository
-        sarif_file: blackduck-sarif.json
+      # Run Black Duck rapid scan for pull request/commit/push
+      - name: Run Black Duck Directguidance Scan
+        if: ${{github.event_name != 'workflow_dispatch'}}
+        run: |
+          blackduck-direct-scan-action --bd_url ${{ secrets.BLACKDUCK_URL }} --bd_token ${{ secrets.BLACKDUCK_API_TOKEN }} --upgrade_major true
+        env:
+          # Pass the GitHub token to the script in order to create PRs
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   
