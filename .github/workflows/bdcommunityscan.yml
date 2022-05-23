@@ -14,33 +14,24 @@
       
       - name: Checkout the code
         uses: actions/checkout@v2
-        
-      # Install Python 3.9 for Black Duck Action
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-   
-      # Install Dependencies for Black Duck Action
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install blackduck_direct_scan_action
  
       # Run manual full/intelligent scan
-      - name: Run Black Duck Full Scan
+      - name: Run Baseline Black Duck Scan (manual, workflow dispatch)
         if: ${{github.event_name == 'workflow_dispatch'}}
-        run: |
-          blackduck-direct-scan-action --bd_url ${{ secrets.BLACKDUCK_URL }} --bd_token ${{ secrets.BLACKDUCK_API_TOKEN }} --mode intelligent
+        uses: synopsys-sig-community/blackduck-direct-scan-action@v1
+        with:
+          bd_url: ${{ secrets.BLACKDUCK_URL }}
+          bd_token: ${{ secrets.BLACKDUCK_API_TOKEN }}
+          mode: intelligent
         env:
-          # Pass the GitHub token to the script in order to create PRs
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}        
+          GITHUB_TOKEN: ${{ github.token }}      
 
       # Run Black Duck rapid scan for pull request/commit/push
-      - name: Run Black Duck Directguidance Scan
-        if: ${{github.event_name != 'workflow_dispatch'}}
-        run: |
-          blackduck-direct-scan-action --bd_url ${{ secrets.BLACKDUCK_URL }} --bd_token ${{ secrets.BLACKDUCK_API_TOKEN }} --upgrade_major true
+      - name: Black Duck security scan
+        uses: synopsys-sig-community/blackduck-direct-scan-action@v1
+        with:
+          bd_url: ${{ secrets.BLACKDUCK_URL }}
+          bd_token: ${{ secrets.BLACKDUCK_API_TOKEN }}
+          upgrade_major: true
         env:
-          # Pass the GitHub token to the script in order to create PRs
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   
+          GITHUB_TOKEN: ${{ github.token }} 
