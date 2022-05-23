@@ -28,6 +28,7 @@
 
       # Run Black Duck rapid scan for pull request/commit/push
       - name: Black Duck security scan
+        if: ${{github.event_name != 'workflow_dispatch'}}
         uses: synopsys-sig-community/blackduck-direct-scan-action@v1
         with:
           bd_url: ${{ secrets.BLACKDUCK_URL }}
